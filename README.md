@@ -1,4 +1,4 @@
-# EOG Alpaca Trading Platform
+# Alpaca Trading Platform
 
 A fantasy trading platform that integrates with Alpaca's trading API, allowing users to view their portfolios, track performance, and engage with colleagues in a social trading environment.
 
@@ -161,7 +161,3 @@ To complete the platform, implement:
 3. **Social Features** - Full commenting and reaction system
 4. **Background Sync** - Periodic data sync from Alpaca API
 5. **Docker Deployment** - Containerization and production deployment
-
-## License
-
-This is an internal EOG Resources project.
