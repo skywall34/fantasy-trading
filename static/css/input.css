@@ -1,0 +1,21 @@
+@import "tailwindcss";
+
+@theme {
+  --color-eog-red: #E31B23;
+  --color-eog-dark-red: #B91C1C;
+  --color-eog-black: #1A1A1A;
+}
+
+/* Custom utilities */
+.flame-icon {
+  filter: drop-shadow(0 0 2px rgba(227, 27, 35, 0.3));
+}
+
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.nav-link:hover {
+  color: #E31B23;
+}

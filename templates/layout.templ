@@ -1,0 +1,82 @@
+package templates
+
+templ Layout(title string, user *User) {
+	<!DOCTYPE html>
+	<html lang="en">
+		<head>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+			<title>{ title } - EOG Alpaca Platform</title>
+			<link rel="stylesheet" href="/static/css/output.css"/>
+			<script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.0"></script>
+			<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+		</head>
+		<body class="bg-gray-100 min-h-screen">
+			@Navigation(user)
+			<main>
+				{ children... }
+			</main>
+			<script src="/static/js/app.js"></script>
+		</body>
+	</html>
+}
+
+type User struct {
+	ID          int
+	DisplayName string
+	Initials    string
+}
+
+templ Navigation(user *User) {
+	<nav class="bg-eog-black text-white shadow-lg">
+		<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+			<div class="flex items-center justify-between h-16">
+				<!-- Logo -->
+				<div class="flex items-center space-x-3">
+					<svg class="h-10 w-10 flame-icon" viewBox="0 0 100 100">
+						<path d="M50 5 C35 25 20 40 25 60 C28 75 35 85 50 95 C65 85 72 75 75 60 C80 40 65 25 50 5" fill="#E31B23"></path>
+						<path d="M50 25 C42 38 35 48 38 60 C40 70 45 78 50 85 C55 78 60 70 62 60 C65 48 58 38 50 25" fill="#FF6B6B"></path>
+						<ellipse cx="50" cy="55" rx="8" ry="12" fill="#FFD93D"></ellipse>
+					</svg>
+					<div>
+						<span class="text-xl font-bold tracking-tight">EOG</span>
+						<span class="text-xl font-light text-gray-300 ml-1">ALPACA</span>
+					</div>
+				</div>
+
+				<!-- Navigation Links -->
+				<div class="hidden md:flex items-center space-x-8">
+					<a href="/dashboard" class="nav-link font-medium text-white hover:text-eog-red transition-colors">Dashboard</a>
+					<a href="/leaderboard" class="nav-link font-medium text-gray-300 hover:text-eog-red transition-colors">Leaderboard</a>
+					<a href="/activity" class="nav-link font-medium text-gray-300 hover:text-eog-red transition-colors">Activity</a>
+				</div>
+
+			<!-- User Menu -->
+			<div class="flex items-center space-x-4">
+				<div class="relative group">
+					<div class="flex items-center space-x-2 cursor-pointer hover:opacity-75 transition-opacity">
+						<div class="w-8 h-8 bg-eog-red rounded-full flex items-center justify-center text-white font-bold text-sm">
+							{ user.Initials }
+						</div>
+						<span class="hidden sm:block text-sm font-medium">{ user.DisplayName }</span>
+					</div>
+					<!-- Dropdown Menu -->
+					<div class="absolute right-0 mt-1 w-48 bg-white text-gray-800 rounded-lg shadow-lg invisible group-hover:visible transition-visibility duration-200 z-50">
+						<a href="/settings" class="block px-4 py-2 hover:bg-gray-100 text-sm rounded-t-lg">Settings</a>
+						<a href="/logout" class="block px-4 py-2 hover:bg-gray-100 text-sm rounded-b-lg border-t">Logout</a>
+					</div>
+				</div>
+			</div>
+			</div>
+		</div>
+	</nav>
+
+	<style>
+		.flame-icon {
+			filter: drop-shadow(0 0 2px rgba(227, 27, 35, 0.3));
+		}
+		.nav-link:hover {
+			color: #E31B23;
+		}
+	</style>
+}
