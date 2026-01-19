@@ -8,6 +8,7 @@ import (
 
 	"github.com/skywall34/fantasy-trading/internal/alpaca"
 	"github.com/skywall34/fantasy-trading/internal/database"
+	"github.com/skywall34/fantasy-trading/internal/middleware"
 	"github.com/skywall34/fantasy-trading/templates"
 )
 
@@ -21,7 +22,7 @@ func NewUserHandler(db *database.DB) *UserHandler {
 
 func (h *UserHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Get current user from context
-	currentUserID, ok := r.Context().Value("user_id").(int)
+	currentUserID, ok := middleware.GetUserID(r.Context())
 	if !ok {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return

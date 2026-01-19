@@ -226,4 +226,39 @@ document.addEventListener('click', function(event) {
             }
         }
     }
+
+    // Emoji picker toggle
+    if (event.target.closest('.emoji-picker-toggle')) {
+        const button = event.target.closest('.emoji-picker-toggle');
+        const activityId = button.getAttribute('data-activity-id');
+        if (activityId) {
+            const menu = document.querySelector(`.emoji-picker-menu[data-activity-id="${activityId}"]`);
+            if (menu) {
+                menu.classList.toggle('hidden');
+            }
+        }
+        event.stopPropagation();
+    }
+
+    // Emoji picker button clicked - close menu after request completes
+    if (event.target.closest('.emoji-picker-menu button')) {
+        const button = event.target.closest('.emoji-picker-menu button');
+        const menu = button.closest('.emoji-picker-menu');
+        if (menu) {
+            // Close menu after a short delay to allow HTMX request to process
+            setTimeout(() => {
+                menu.classList.add('hidden');
+            }, 100);
+        }
+    }
+});
+
+// Close emoji picker when clicking outside
+document.addEventListener('click', function(event) {
+    // Don't close if clicking on emoji picker toggle or menu items
+    if (!event.target.closest('.emoji-picker-toggle') && !event.target.closest('.emoji-picker-menu')) {
+        document.querySelectorAll('.emoji-picker-menu').forEach(menu => {
+            menu.classList.add('hidden');
+        });
+    }
 });

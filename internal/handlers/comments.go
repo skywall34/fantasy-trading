@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/skywall34/fantasy-trading/internal/database"
+	"github.com/skywall34/fantasy-trading/internal/middleware"
 	"github.com/skywall34/fantasy-trading/templates"
 )
 
@@ -28,7 +29,15 @@ func (h *CommentsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	activityID := parts[0]
+	endpoint := parts[1]
 
+	// Check if this is a reaction request
+	if endpoint == "react" {
+		h.handleReaction(w, r, activityID)
+		return
+	}
+
+	// Otherwise, handle as comment request
 	switch r.Method {
 	case http.MethodGet:
 		h.getComments(w, r, activityID)
@@ -55,7 +64,7 @@ func (h *CommentsHandler) getComments(w http.ResponseWriter, r *http.Request, ac
 }
 
 func (h *CommentsHandler) createComment(w http.ResponseWriter, r *http.Request, activityID string) {
-	userID, ok := r.Context().Value("user_id").(int)
+	userID, ok := middleware.GetUserID(r.Context())
 	if !ok {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
@@ -94,6 +103,80 @@ func (h *CommentsHandler) createComment(w http.ResponseWriter, r *http.Request, 
 	h.getComments(w, r, activityID)
 }
 
+func (h *CommentsHandler) handleReaction(w http.ResponseWriter, r *http.Request, activityID string) {
+	userID, ok := middleware.GetUserID(r.Context())
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Parse form data (HTMX sends hx-vals as form data by default)
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "Invalid form data", http.StatusBadRequest)
+		return
+	}
+
+	emoji := r.FormValue("emoji")
+	if emoji == "" {
+		http.Error(w, "Emoji is required", http.StatusBadRequest)
+		return
+	}
+
+	validEmojis := map[string]bool{
+		"🚀": true,
+		"💎": true,
+		"📈": true,
+		"📉": true,
+		"🔥": true,
+		"👀": true,
+		"🤔": true,
+		"💰": true,
+	}
+
+	if !validEmojis[emoji] {
+		http.Error(w, "Invalid emoji", http.StatusBadRequest)
+		return
+	}
+
+	_, err := h.db.AddReaction(activityID, userID, emoji)
+	if err != nil {
+		log.Printf("Error toggling reaction: %v", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	reactionCounts, err := h.db.GetReactionCounts(activityID)
+	if err != nil {
+		log.Printf("Error getting reaction counts: %v", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	userReactions, err := h.db.GetUserReactionsForActivity(activityID, userID)
+	if err != nil {
+		log.Printf("Error getting user reactions: %v", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	activity := templates.ActivityFeedItem{
+		ID:             activityID,
+		ReactionCounts: reactionCounts,
+		UserReactions:  userReactions,
+	}
+
+	if err := templates.ReactionButtons(activity).Render(r.Context(), w); err != nil {
+		log.Printf("Error rendering reactions: %v", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+}
+
 // CommentActionsHandler handles update and delete operations on individual comments
 type CommentActionsHandler struct {
 	db *database.DB
@@ -104,7 +187,7 @@ func NewCommentActionsHandler(db *database.DB) *CommentActionsHandler {
 }
 
 func (h *CommentActionsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	userID, ok := r.Context().Value("user_id").(int)
+	userID, ok := middleware.GetUserID(r.Context())
 	if !ok {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return

@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/skywall34/fantasy-trading/internal/database"
+	"github.com/skywall34/fantasy-trading/internal/middleware"
 	"github.com/skywall34/fantasy-trading/templates"
 )
 
@@ -19,7 +20,7 @@ func NewReactionsHandler(db *database.DB) *ReactionsHandler {
 }
 
 func (h *ReactionsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	userID, ok := r.Context().Value("user_id").(int)
+	userID, ok := middleware.GetUserID(r.Context())
 	if !ok {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return

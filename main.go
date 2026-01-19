@@ -52,14 +52,15 @@ func main() {
 	activityHandler := handlers.NewActivityHandler(db)
 	commentsHandler := handlers.NewCommentsHandler(db)
 	commentActionsHandler := handlers.NewCommentActionsHandler(db)
-	reactionsHandler := handlers.NewReactionsHandler(db)
 	userHandler := handlers.NewUserHandler(db)
+	logoutHandler := handlers.NewLogoutHandler(db)
 
 	// Create router
 	mux := http.NewServeMux()
 
 	// Public routes
 	mux.Handle("/login", loginHandler)
+	mux.Handle("/logout", logoutHandler)
 
 	// Static files
 	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))
@@ -75,7 +76,6 @@ func main() {
 	mux.Handle("/api/profile/update", middleware.AuthMiddleware(db)(updateProfileHandler))
 	mux.Handle("/api/activities/", middleware.AuthMiddleware(db)(http.StripPrefix("/api/activities/", commentsHandler)))
 	mux.Handle("/api/comments/", middleware.AuthMiddleware(db)(http.StripPrefix("/api/comments/", commentActionsHandler)))
-	mux.Handle("/api/react/", middleware.AuthMiddleware(db)(http.StripPrefix("/api/react/", reactionsHandler)))
 	mux.Handle("/", http.RedirectHandler("/dashboard", http.StatusTemporaryRedirect))
 
 	// Wrap with middleware

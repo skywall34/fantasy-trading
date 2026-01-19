@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/skywall34/fantasy-trading/internal/database"
+	"github.com/skywall34/fantasy-trading/internal/middleware"
 	"github.com/skywall34/fantasy-trading/templates"
 )
 
@@ -17,7 +18,7 @@ func NewLeaderboardHandler(db *database.DB) *LeaderboardHandler {
 }
 
 func (h *LeaderboardHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	userID, ok := r.Context().Value("user_id").(int)
+	userID, ok := middleware.GetUserID(r.Context())
 	if !ok {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
