@@ -94,29 +94,6 @@ func convertActivityToTemplateData(db *database.DB, act database.Activity) (temp
 	}, nil
 }
 
-// getRecentActivityData fetches recent activities for a specific user from the database and converts them to template data
-func getRecentActivityData(db *database.DB, userID int, limit int) []templates.ActivityData {
-	activities, err := db.GetUserRecentActivities(userID, limit)
-	if err != nil {
-		return []templates.ActivityData{}
-	}
-
-	recentActivity := make([]templates.ActivityData, 0, len(activities))
-	for _, act := range activities {
-		// Skip activities without symbol or qty
-		if !act.Symbol.Valid || !act.Qty.Valid {
-			continue
-		}
-
-		activityData, err := convertActivityToTemplateData(db, act)
-		if err != nil {
-			continue
-		}
-		recentActivity = append(recentActivity, activityData)
-	}
-
-	return recentActivity
-}
 
 // AccountData holds parsed account information
 type AccountData struct {
@@ -168,7 +145,7 @@ func convertPositionsToTemplateData(positions []alpaca.Position) []templates.Pos
 	positionData := make([]templates.PositionData, 0, len(positions))
 	for _, pos := range positions {
 		qty, _ := strconv.ParseFloat(pos.Qty, 64)
-		currentPrice, _ := strconv.ParseFloat(pos.CurrentPrice, 64)
+		avgEntryPrice, _ := strconv.ParseFloat(pos.AvgEntryPrice, 64)
 		marketValue, _ := strconv.ParseFloat(pos.MarketValue, 64)
 		unrealizedPL, _ := strconv.ParseFloat(pos.UnrealizedPL, 64)
 		unrealizedPct, _ := strconv.ParseFloat(pos.UnrealizedPLPC, 64)
@@ -178,7 +155,7 @@ func convertPositionsToTemplateData(positions []alpaca.Position) []templates.Pos
 			Name:          pos.Symbol, // TODO: Get actual company name
 			AssetClass:    pos.AssetClass,
 			Qty:           qty,
-			Price:         currentPrice,
+			Price:         avgEntryPrice,
 			MarketValue:   marketValue,
 			UnrealizedPL:  unrealizedPL,
 			UnrealizedPct: unrealizedPct * 100,
