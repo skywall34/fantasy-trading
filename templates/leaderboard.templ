@@ -1,0 +1,173 @@
+package templates
+
+import "fmt"
+
+type LeaderboardData struct {
+	Entries     []LeaderboardEntryData
+	CurrentUserID int
+	Period      string // "daily", "weekly", "monthly", "all"
+}
+
+type LeaderboardEntryData struct {
+	UserID       int
+	DisplayName  string
+	Nickname     string
+	AvatarURL    string
+	CurrentEquity float64
+	GainAmount   float64
+	GainPercent  float64
+	Rank         int
+	ShowAmounts  bool
+	IsCurrentUser bool
+}
+
+templ Leaderboard(user *User, data LeaderboardData) {
+	@Layout("Leaderboard", user) {
+		<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+			<div class="mb-8">
+				<h1 class="text-3xl font-bold text-eog-black mb-4">Leaderboard</h1>
+				<div class="flex space-x-2">
+					<button
+						hx-get="/leaderboard?period=daily"
+						hx-target="#leaderboard-content"
+						hx-swap="innerHTML"
+						class={ "px-4 py-2 rounded-lg transition-colors", templ.KV("bg-eog-red text-white", data.Period == "daily"), templ.KV("bg-gray-100 text-gray-600 hover:bg-eog-red hover:text-white", data.Period != "daily") }
+					>
+						Daily
+					</button>
+					<button
+						hx-get="/leaderboard?period=weekly"
+						hx-target="#leaderboard-content"
+						hx-swap="innerHTML"
+						class={ "px-4 py-2 rounded-lg transition-colors", templ.KV("bg-eog-red text-white", data.Period == "weekly"), templ.KV("bg-gray-100 text-gray-600 hover:bg-eog-red hover:text-white", data.Period != "weekly") }
+					>
+						Weekly
+					</button>
+					<button
+						hx-get="/leaderboard?period=monthly"
+						hx-target="#leaderboard-content"
+						hx-swap="innerHTML"
+						class={ "px-4 py-2 rounded-lg transition-colors", templ.KV("bg-eog-red text-white", data.Period == "monthly"), templ.KV("bg-gray-100 text-gray-600 hover:bg-eog-red hover:text-white", data.Period != "monthly") }
+					>
+						Monthly
+					</button>
+					<button
+						hx-get="/leaderboard?period=all"
+						hx-target="#leaderboard-content"
+						hx-swap="innerHTML"
+						class={ "px-4 py-2 rounded-lg transition-colors", templ.KV("bg-eog-red text-white", data.Period == "all"), templ.KV("bg-gray-100 text-gray-600 hover:bg-eog-red hover:text-white", data.Period != "all") }
+					>
+						All Time
+					</button>
+				</div>
+			</div>
+			<div id="leaderboard-content">
+				@LeaderboardContent(data)
+			</div>
+		</div>
+	}
+}
+
+templ LeaderboardContent(data LeaderboardData) {
+	<div class="bg-white rounded-xl shadow-sm overflow-hidden">
+		if len(data.Entries) == 0 {
+			<div class="p-8 text-center text-gray-500">
+				<p class="text-lg">No leaderboard data available yet.</p>
+				<p class="text-sm mt-2">Start trading to appear on the leaderboard!</p>
+			</div>
+		} else {
+			<div class="divide-y divide-gray-200">
+				for _, entry := range data.Entries {
+					@LeaderboardRow(entry)
+				}
+			</div>
+
+			if data.CurrentUserID > 0 {
+				for _, entry := range data.Entries {
+					if entry.IsCurrentUser {
+						<div class="bg-gray-50 border-t-2 border-eog-red p-4">
+							<p class="text-center text-sm text-gray-600">
+								Your Rank: <span class="font-bold text-eog-black">#{fmt.Sprintf("%d", entry.Rank)}</span> of <span class="font-bold">{fmt.Sprintf("%d", len(data.Entries))}</span> participants
+							</p>
+						</div>
+					}
+				}
+			}
+		}
+	</div>
+}
+
+templ LeaderboardRow(entry LeaderboardEntryData) {
+	<div class={ "flex items-center justify-between p-4 hover:bg-gray-50 transition-colors", templ.KV("bg-yellow-50", entry.IsCurrentUser) }>
+		<div class="flex items-center space-x-4 flex-1">
+			<div class="w-16 text-center">
+				if entry.Rank == 1 {
+					<span class="text-2xl">🥇</span>
+				} else if entry.Rank == 2 {
+					<span class="text-2xl">🥈</span>
+				} else if entry.Rank == 3 {
+					<span class="text-2xl">🥉</span>
+				} else {
+					<span class="text-lg font-semibold text-gray-500">#{fmt.Sprintf("%d", entry.Rank)}</span>
+				}
+			</div>
+
+			<div class="flex items-center space-x-3 flex-1">
+				if entry.AvatarURL != "" {
+					<img src={entry.AvatarURL} alt="Avatar" class="w-10 h-10 rounded-full"/>
+				} else {
+					<div class="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
+						<span class="text-gray-600 font-semibold text-sm">
+							if entry.Nickname != "" {
+								{string(entry.Nickname[0])}
+							} else if entry.DisplayName != "" {
+								{string(entry.DisplayName[0])}
+							} else {
+								U
+							}
+						</span>
+					</div>
+				}
+				<div>
+					<a href={templ.URL(fmt.Sprintf("/user/%d", entry.UserID))} class="font-semibold text-gray-900 hover:text-eog-red">
+						if entry.Nickname != "" {
+							{entry.Nickname}
+						} else if entry.DisplayName != "" {
+							{entry.DisplayName}
+						} else {
+							User {fmt.Sprintf("%d", entry.UserID)}
+						}
+					</a>
+				</div>
+			</div>
+		</div>
+
+		<div class="flex items-center space-x-6">
+			<div class="text-right">
+				<p class={ "text-lg font-bold", templ.KV("text-green-600", entry.GainPercent >= 0), templ.KV("text-red-600", entry.GainPercent < 0) }>
+					if entry.GainPercent >= 0 {
+						+{fmt.Sprintf("%.2f", entry.GainPercent)}%
+					} else {
+						{fmt.Sprintf("%.2f", entry.GainPercent)}%
+					}
+				</p>
+				if entry.ShowAmounts {
+					<p class="text-sm text-gray-500">
+						if entry.GainAmount >= 0 {
+							+${fmt.Sprintf("%.2f", entry.GainAmount)}
+						} else {
+							-${fmt.Sprintf("%.2f", -entry.GainAmount)}
+						}
+					</p>
+				}
+			</div>
+
+			if entry.ShowAmounts {
+				<div class="text-right min-w-[120px]">
+					<p class="text-lg font-semibold text-gray-900">${fmt.Sprintf("%.2f", entry.CurrentEquity)}</p>
+					<p class="text-xs text-gray-500">Portfolio Value</p>
+				</div>
+			}
+		</div>
+	</div>
+}

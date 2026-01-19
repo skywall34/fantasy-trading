@@ -48,6 +48,12 @@ func main() {
 	portfolioHistoryHandler := handlers.NewPortfolioHistoryHandler()
 	updateProfileHandler := handlers.NewUpdateProfileHandler(db)
 	settingsHandler := handlers.NewSettingsHandler(db)
+	leaderboardHandler := handlers.NewLeaderboardHandler(db)
+	activityHandler := handlers.NewActivityHandler(db)
+	commentsHandler := handlers.NewCommentsHandler(db)
+	commentActionsHandler := handlers.NewCommentActionsHandler(db)
+	reactionsHandler := handlers.NewReactionsHandler(db)
+	userHandler := handlers.NewUserHandler(db)
 
 	// Create router
 	mux := http.NewServeMux()
@@ -61,9 +67,15 @@ func main() {
 	// Protected routes
 	mux.Handle("/dashboard", middleware.AuthMiddleware(db)(dashboardHandler))
 	mux.Handle("/dashboard/content", middleware.AuthMiddleware(db)(dashboardContentHandler))
+	mux.Handle("/leaderboard", middleware.AuthMiddleware(db)(leaderboardHandler))
+	mux.Handle("/activity", middleware.AuthMiddleware(db)(activityHandler))
+	mux.Handle("/user/", middleware.AuthMiddleware(db)(userHandler))
 	mux.Handle("/settings", middleware.AuthMiddleware(db)(settingsHandler))
 	mux.Handle("/api/portfolio/history", middleware.AuthMiddleware(db)(portfolioHistoryHandler))
 	mux.Handle("/api/profile/update", middleware.AuthMiddleware(db)(updateProfileHandler))
+	mux.Handle("/api/activities/", middleware.AuthMiddleware(db)(http.StripPrefix("/api/activities/", commentsHandler)))
+	mux.Handle("/api/comments/", middleware.AuthMiddleware(db)(http.StripPrefix("/api/comments/", commentActionsHandler)))
+	mux.Handle("/api/react/", middleware.AuthMiddleware(db)(http.StripPrefix("/api/react/", reactionsHandler)))
 	mux.Handle("/", http.RedirectHandler("/dashboard", http.StatusTemporaryRedirect))
 
 	// Wrap with middleware
