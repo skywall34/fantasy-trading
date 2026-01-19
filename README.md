@@ -4,13 +4,43 @@ A fantasy trading platform that integrates with Alpaca's trading API, allowing u
 
 ## Features
 
-- 🔐 API key authentication with Alpaca
-- 📊 Real-time portfolio dashboard
+### Authentication & Security
+- 🔐 Secure API key authentication with Alpaca
+- 🔒 Encrypted credential storage with AES-256-GCM
+- 🍪 Session-based authentication with secure cookies
+
+### Portfolio Management
+- 📊 Real-time portfolio dashboard with live Alpaca data
 - 📈 Historical performance charts
-- 💼 Position tracking (stocks, crypto, options)
-- 🏆 Leaderboard rankings
-- 📱 Activity feed with social features
-- 💬 Comments and reactions on trades
+- 💼 Position tracking across multiple asset classes (stocks, crypto, options)
+- 💰 P&L tracking with percentage gains/losses
+
+### Social Features
+- 🏆 **Leaderboard** - Competitive rankings with multiple time periods
+  - Daily, weekly, monthly, and all-time rankings
+  - Privacy controls for sharing portfolio amounts
+  - Medal icons for top 3 performers
+- 📱 **Activity Feed** - Real-time trade activity stream
+  - Filter by all users or following
+  - View trading activity across the platform
+- 💬 **Comments** - Threaded discussions on trades
+  - Reply to comments with threading
+  - 15-minute edit window
+  - 500 character limit
+- 🎭 **Reactions** - Express opinions with emoji reactions
+  - 8 emoji options (🚀💎📈📉🔥👀🤔💰)
+  - Toggle reactions on/off
+  - Real-time reaction counts
+- 👤 **User Profiles** - Personalized trader profiles
+  - Public/private profile settings
+  - Display name and avatar customization
+  - Recent activity and position history
+  - Performance statistics and leaderboard rank
+
+### Background Services
+- 🔄 Automated data synchronization from Alpaca API
+- ⏱️ Configurable sync intervals
+- 📸 Portfolio snapshot history
 
 ## Tech Stack
 
@@ -152,12 +182,20 @@ The application uses Alpaca's Trading API v2 with API key authentication:
 - Each user manages their own API credentials
 - No trading capability - read-only access to account data
 
-## Next Steps
+## Implementation Status
 
-To complete the platform, implement:
+### Completed Features ✅
+1. **Leaderboard** - Competitive rankings with daily/weekly/monthly/all-time periods
+2. **Activity Feed** - Platform-wide trade activity with filtering
+3. **Comments System** - Threaded discussions with replies and edit capabilities
+4. **Reactions System** - 8 emoji reactions with toggle behavior
+5. **User Profiles** - Customizable profiles with privacy controls
+6. **Background Sync** - Automated data synchronization from Alpaca API
 
-1. **Leaderboard Page** - Rankings based on portfolio performance
-2. **Activity Feed Page** - Platform-wide trade activity with reactions and comments
-3. **Social Features** - Full commenting and reaction system
-4. **Background Sync** - Periodic data sync from Alpaca API
-5. **Docker Deployment** - Containerization and production deployment
+### Future Enhancements
+- **Following System** - Follow other traders and filter activity feed
+- **Pagination** - Implement offset-based pagination for activity feed
+- **Enhanced User Search** - Search and discover other traders
+- **Trade Notifications** - Real-time notifications for followed traders
+- **Docker Deployment** - Containerization for production deployment
+- **Advanced Analytics** - More detailed performance metrics and charts

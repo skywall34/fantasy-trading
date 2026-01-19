@@ -43,27 +43,27 @@ func Settings(user *User, currentNickname string) templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"max-w-4xl mx-auto px-4 py-8\"><div class=\"bg-white rounded-lg shadow-md p-6 mb-8\"><h1 class=\"text-3xl font-bold mb-8\">Settings</h1><!-- Nickname Section --><div class=\"mb-8\"><h2 class=\"text-xl font-semibold mb-4\">Display Name</h2><p class=\"text-gray-600 mb-4\">Set a custom nickname to display for your trading account</p><form hx-post=\"/api/profile/update\" hx-target=\"this\" class=\"space-y-4\"><div><label for=\"nickname\" class=\"block text-sm font-medium text-gray-700 mb-2\">Nickname</label> <input type=\"text\" id=\"nickname\" name=\"nickname\" value=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"max-w-4xl mx-auto px-4 py-8\"><div class=\"bg-white rounded-lg shadow-md p-6 mb-8\"><h1 class=\"text-3xl font-bold mb-8\">Settings</h1><div class=\"mb-8\"><h2 class=\"text-xl font-semibold mb-4\">Display Name</h2><p class=\"text-gray-600 mb-4\">Set a custom nickname to display for your trading account</p><form hx-post=\"/api/profile/update\" hx-target=\"this\" class=\"space-y-4\"><div><label for=\"nickname\" class=\"block text-sm font-medium text-gray-700 mb-2\">Nickname</label> <input type=\"text\" id=\"nickname\" name=\"nickname\" value=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(currentNickname)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/settings.templ`, Line: 23, Col: 31}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/settings.templ`, Line: 22, Col: 31}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "\" maxlength=\"50\" placeholder=\"Enter your nickname (optional)\" class=\"w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-eog-red\"><p class=\"text-xs text-gray-500 mt-2\">Maximum 50 characters</p></div><div class=\"flex gap-4\"><button type=\"submit\" class=\"px-6 py-2 bg-eog-red text-white rounded-lg hover:bg-red-700 transition-colors font-medium\">Save Changes</button> <button type=\"reset\" class=\"px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium\">Reset</button></div><!-- Success/Error Messages --><div id=\"status-message\" class=\"hidden mt-4 p-4 rounded-lg\"></div></form></div><!-- Account Information Section --><div class=\"border-t pt-8\"><h2 class=\"text-xl font-semibold mb-4\">Account Information</h2><div class=\"space-y-4\"><div><label class=\"block text-sm font-medium text-gray-700 mb-1\">Display Name</label><p class=\"text-gray-600\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "\" maxlength=\"50\" placeholder=\"Enter your nickname (optional)\" class=\"w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-eog-red\"><p class=\"text-xs text-gray-500 mt-2\">Maximum 50 characters</p></div><div class=\"flex gap-4\"><button type=\"submit\" class=\"px-6 py-2 bg-eog-red text-white rounded-lg hover:bg-red-700 transition-colors font-medium\">Save Changes</button> <button type=\"reset\" class=\"px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium\">Reset</button></div><div id=\"status-message\" class=\"hidden mt-4 p-4 rounded-lg\"></div></form></div><div class=\"border-t pt-8\"><h2 class=\"text-xl font-semibold mb-4\">Account Information</h2><div class=\"space-y-4\"><div><label class=\"block text-sm font-medium text-gray-700 mb-1\">Display Name</label><p class=\"text-gray-600\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var4 string
 			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(user.DisplayName)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/settings.templ`, Line: 57, Col: 50}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/settings.templ`, Line: 54, Col: 50}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 			if templ_7745c5c3_Err != nil {
@@ -76,7 +76,7 @@ func Settings(user *User, currentNickname string) templ.Component {
 			var templ_7745c5c3_Var5 string
 			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", user.ID))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/settings.templ`, Line: 61, Col: 60}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/settings.templ`, Line: 58, Col: 60}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 			if templ_7745c5c3_Err != nil {
