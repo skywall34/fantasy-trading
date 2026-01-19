@@ -1,10 +1,14 @@
 package handlers
 
 import (
+	"context"
 	"log"
 	"net/http"
+	"sort"
 	"strconv"
+	"time"
 
+	"github.com/skywall34/fantasy-trading/internal/alpaca"
 	"github.com/skywall34/fantasy-trading/internal/database"
 	"github.com/skywall34/fantasy-trading/internal/middleware"
 	"github.com/skywall34/fantasy-trading/templates"
@@ -45,27 +49,64 @@ func (h *ActivityHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	limit := 20
-	// TODO: Implement proper pagination with offset
+	offset := (page - 1) * limit
 
+	// Fetch live activities from Alpaca for all users
 	var activities []database.Activity
+	var usersToFetch []int
+
 	switch filter {
 	case "all":
-		activities, err = h.db.GetRecentActivities(limit + 1)
+		// Get all public users
+		publicUsers, err := h.db.GetAllPublicUsers()
+		if err != nil {
+			log.Printf("Error getting public users: %v", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+		for _, u := range publicUsers {
+			usersToFetch = append(usersToFetch, u.ID)
+		}
 	case "following":
-		// TODO: Implement following filter when we add user following feature
-		activities, err = h.db.GetRecentActivities(limit + 1)
+		// Get users that current user is following
+		usersToFetch, err = h.db.GetFollowing(userID)
+		if err != nil {
+			log.Printf("Error getting following: %v", err)
+			usersToFetch = []int{}
+		}
 	default:
-		activities, err = h.db.GetRecentActivities(limit + 1)
+		// Get all public users
+		publicUsers, err := h.db.GetAllPublicUsers()
+		if err != nil {
+			log.Printf("Error getting public users: %v", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+		for _, u := range publicUsers {
+			usersToFetch = append(usersToFetch, u.ID)
+		}
 	}
 
-	if err != nil {
-		log.Printf("Error getting activities: %v", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+	// Fetch activities from Alpaca for each user
+	activities = h.fetchActivitiesForUsers(r.Context(), usersToFetch)
+
+	// Apply pagination
+	start := offset
+	end := offset + limit + 1
+	hasMore := false
+
+	if start >= len(activities) {
+		activities = []database.Activity{}
+	} else {
+		if end > len(activities) {
+			end = len(activities)
+		} else {
+			hasMore = true
+		}
+		activities = activities[start:end]
 	}
 
-	hasMore := len(activities) > limit
-	if hasMore {
+	if hasMore && len(activities) > limit {
 		activities = activities[:limit]
 	}
 
@@ -181,4 +222,62 @@ func (h *ActivityHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
+}
+
+// fetchActivitiesForUsers fetches live activities from Alpaca for multiple users
+func (h *ActivityHandler) fetchActivitiesForUsers(ctx context.Context, userIDs []int) []database.Activity {
+	var allActivities []database.Activity
+
+	for _, uid := range userIDs {
+		// Get user's session
+		session, err := h.db.GetLatestSession(uid)
+		if err != nil {
+			log.Printf("No session found for user %d: %v", uid, err)
+			continue
+		}
+
+		// Decrypt API keys
+		apiKey, apiSecret, err := database.DecryptAPIKeys(session.APIKey, session.APISecret)
+		if err != nil {
+			log.Printf("Failed to decrypt API keys for user %d: %v", uid, err)
+			continue
+		}
+
+		// Fetch activities from Alpaca
+		client := alpaca.NewClient(apiKey, apiSecret)
+		alpacaActivities, err := client.GetActivities(ctx)
+		if err != nil {
+			log.Printf("Failed to get activities from Alpaca for user %d: %v", uid, err)
+			continue
+		}
+
+		// Convert to database.Activity format
+		for _, act := range alpacaActivities {
+			qty, _ := strconv.ParseFloat(act.Qty, 64)
+			price, _ := strconv.ParseFloat(act.Price, 64)
+			transTime, _ := time.Parse(time.RFC3339, act.TransactionTime)
+
+			allActivities = append(allActivities, database.Activity{
+				ID:              act.ID,
+				UserID:          uid,
+				ActivityType:    act.ActivityType,
+				AssetClass:      database.NewNullString("us_equity"),
+				Symbol:          database.NewNullString(act.Symbol),
+				Side:            database.NewNullString(act.Side),
+				Qty:             database.NewNullFloat64(qty),
+				Price:           database.NewNullFloat64(price),
+				TransactionTime: database.NewNullTime(transTime),
+			})
+		}
+	}
+
+	// Sort all activities by transaction time descending
+	sort.Slice(allActivities, func(i, j int) bool {
+		if !allActivities[i].TransactionTime.Valid || !allActivities[j].TransactionTime.Valid {
+			return false
+		}
+		return allActivities[i].TransactionTime.Time.After(allActivities[j].TransactionTime.Time)
+	})
+
+	return allActivities
 }

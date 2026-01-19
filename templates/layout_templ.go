@@ -93,14 +93,14 @@ func Navigation(user *User) templ.Component {
 			templ_7745c5c3_Var3 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<nav class=\"bg-eog-black text-white shadow-lg\"><div class=\"max-w-7xl mx-auto px-4 sm:px-6 lg:px-8\"><div class=\"flex items-center justify-between h-16\"><!-- Logo --><div class=\"flex items-center space-x-3\"><svg class=\"h-10 w-10 flame-icon\" viewBox=\"0 0 100 100\"><path d=\"M50 5 C35 25 20 40 25 60 C28 75 35 85 50 95 C65 85 72 75 75 60 C80 40 65 25 50 5\" fill=\"#E31B23\"></path> <path d=\"M50 25 C42 38 35 48 38 60 C40 70 45 78 50 85 C55 78 60 70 62 60 C65 48 58 38 50 25\" fill=\"#FF6B6B\"></path> <ellipse cx=\"50\" cy=\"55\" rx=\"8\" ry=\"12\" fill=\"#FFD93D\"></ellipse></svg><div><span class=\"text-xl font-bold tracking-tight\">EOG</span> <span class=\"text-xl font-light text-gray-300 ml-1\">ALPACA</span></div></div><!-- Navigation Links --><div class=\"hidden md:flex items-center space-x-8\"><a href=\"/dashboard\" class=\"nav-link font-medium text-white hover:text-eog-red transition-colors\">Dashboard</a> <a href=\"/leaderboard\" class=\"nav-link font-medium text-gray-300 hover:text-eog-red transition-colors\">Leaderboard</a> <a href=\"/activity\" class=\"nav-link font-medium text-gray-300 hover:text-eog-red transition-colors\">Activity</a></div><!-- User Menu --><div class=\"flex items-center space-x-4\"><div class=\"relative group\"><div class=\"flex items-center space-x-2 cursor-pointer hover:opacity-75 transition-opacity\"><div class=\"w-8 h-8 bg-eog-red rounded-full flex items-center justify-center text-white font-bold text-sm\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<nav class=\"bg-eog-black text-white shadow-lg\"><div class=\"max-w-7xl mx-auto px-4 sm:px-6 lg:px-8\"><div class=\"flex items-center justify-between h-16\"><!-- Logo --><div class=\"flex items-center space-x-3\"><svg class=\"h-10 w-10 flame-icon\" viewBox=\"0 0 100 100\"><path d=\"M50 5 C35 25 20 40 25 60 C28 75 35 85 50 95 C65 85 72 75 75 60 C80 40 65 25 50 5\" fill=\"#E31B23\"></path> <path d=\"M50 25 C42 38 35 48 38 60 C40 70 45 78 50 85 C55 78 60 70 62 60 C65 48 58 38 50 25\" fill=\"#FF6B6B\"></path> <ellipse cx=\"50\" cy=\"55\" rx=\"8\" ry=\"12\" fill=\"#FFD93D\"></ellipse></svg><div><span class=\"text-xl font-bold tracking-tight\">EOG</span> <span class=\"text-xl font-light text-gray-300 ml-1\">ALPACA</span></div></div><!-- Navigation Links --><div class=\"hidden md:flex items-center space-x-8\"><a href=\"/dashboard\" class=\"nav-link font-medium text-white hover:text-eog-red transition-colors\">Dashboard</a> <a href=\"/leaderboard\" class=\"nav-link font-medium text-gray-300 hover:text-eog-red transition-colors\">Leaderboard</a> <a href=\"/activity\" class=\"nav-link font-medium text-gray-300 hover:text-eog-red transition-colors\">Activity</a> <a href=\"/search\" class=\"nav-link font-medium text-gray-300 hover:text-eog-red transition-colors\">Search</a></div><!-- User Menu --><div class=\"flex items-center space-x-4\"><div class=\"relative group\"><div class=\"flex items-center space-x-2 cursor-pointer hover:opacity-75 transition-opacity\"><div class=\"w-8 h-8 bg-eog-red rounded-full flex items-center justify-center text-white font-bold text-sm\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var4 string
 		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(user.Initials)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/layout.templ`, Line: 59, Col: 22}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/layout.templ`, Line: 60, Col: 22}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {
@@ -113,7 +113,7 @@ func Navigation(user *User) templ.Component {
 		var templ_7745c5c3_Var5 string
 		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(user.DisplayName)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/layout.templ`, Line: 61, Col: 74}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/layout.templ`, Line: 62, Col: 74}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 		if templ_7745c5c3_Err != nil {

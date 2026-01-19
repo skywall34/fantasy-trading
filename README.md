@@ -46,8 +46,16 @@ A fantasy trading platform that integrates with Alpaca's trading API, allowing u
 
 - **Backend:** Go 1.23+
 - **Frontend:** HTMX, Templ, Tailwind CSS
-- **Database:** SQLite3
-- **APIs:** Alpaca Connect API & Trading API v2
+- **Database:** SQLite3 (for application data only)
+- **APIs:** Alpaca Connect API & Trading API v2 (live data source)
+
+## Architecture
+
+This application follows a **"Live Data First"** architecture:
+- **Trading/Portfolio Data**: Always fetched live from Alpaca API (account, positions, activities, performance)
+- **Application Data**: Stored in SQLite (user preferences, follows, comments, reactions)
+
+See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed documentation.
 
 ## Getting Started
 
@@ -186,16 +194,18 @@ The application uses Alpaca's Trading API v2 with API key authentication:
 
 ### Completed Features ✅
 1. **Leaderboard** - Competitive rankings with daily/weekly/monthly/all-time periods
-2. **Activity Feed** - Platform-wide trade activity with filtering
+2. **Activity Feed** - Platform-wide trade activity with filtering and pagination
 3. **Comments System** - Threaded discussions with replies and edit capabilities
 4. **Reactions System** - 8 emoji reactions with toggle behavior
-5. **User Profiles** - Customizable profiles with privacy controls
+5. **User Profiles** - Customizable profiles with privacy controls and follower counts
 6. **Background Sync** - Automated data synchronization from Alpaca API
+7. **Following System** - Follow/unfollow traders and filter activity feed by followed users
+8. **Pagination** - Offset-based pagination for activity feed with Previous/Next controls
+9. **User Search** - Search and discover traders by name or email
+10. **Position Display Fix** - Positions now show average entry price instead of current market price
 
 ### Future Enhancements
-- **Following System** - Follow other traders and filter activity feed
-- **Pagination** - Implement offset-based pagination for activity feed
-- **Enhanced User Search** - Search and discover other traders
 - **Trade Notifications** - Real-time notifications for followed traders
 - **Docker Deployment** - Containerization for production deployment
 - **Advanced Analytics** - More detailed performance metrics and charts
+- **Mobile Responsive Design** - Enhanced mobile user experience

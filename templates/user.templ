@@ -13,6 +13,9 @@ type UserProfileData struct {
 	Positions        []PositionData
 	RecentActivities []ActivityData
 	PerformanceData  PerformanceData
+	FollowerCount    int
+	FollowingCount   int
+	IsFollowing      bool
 }
 
 type UserProfile struct {
@@ -56,13 +59,50 @@ templ UserProfilePage(user *User, data UserProfileData) {
 						</div>
 
 						<div>
-							<h1 class="text-3xl font-bold text-eog-black mb-2">
-								if data.ProfileUser.Nickname != "" {
-									{ data.ProfileUser.Nickname }
-								} else {
-									{ data.ProfileUser.DisplayName }
+							<div class="flex items-center space-x-3 mb-2">
+								<h1 class="text-3xl font-bold text-eog-black">
+									if data.ProfileUser.Nickname != "" {
+										{ data.ProfileUser.Nickname }
+									} else {
+										{ data.ProfileUser.DisplayName }
+									}
+								</h1>
+								if !data.IsOwnProfile {
+									<div id="follow-button-container">
+										if data.IsFollowing {
+											<button
+												hx-delete="/api/follow"
+												hx-vals={ fmt.Sprintf(`{"user_id": %d}`, data.ProfileUser.ID) }
+												hx-swap="none"
+												hx-trigger="click"
+												hx-on::after-request="window.location.reload()"
+												class="px-4 py-1 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors text-sm font-medium"
+											>
+												Following
+											</button>
+										} else {
+											<button
+												hx-post="/api/follow"
+												hx-vals={ fmt.Sprintf(`{"user_id": %d}`, data.ProfileUser.ID) }
+												hx-swap="none"
+												hx-trigger="click"
+												hx-on::after-request="window.location.reload()"
+												class="px-4 py-1 bg-eog-red text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium"
+											>
+												Follow
+											</button>
+										}
+									</div>
 								}
-							</h1>
+							</div>
+							<div class="flex items-center space-x-4 mb-1">
+								<p class="text-gray-600 text-sm">
+									<span class="font-bold text-eog-black">{ fmt.Sprintf("%d", data.FollowerCount) }</span> followers
+								</p>
+								<p class="text-gray-600 text-sm">
+									<span class="font-bold text-eog-black">{ fmt.Sprintf("%d", data.FollowingCount) }</span> following
+								</p>
+							</div>
 							<p class="text-gray-600 text-sm mb-1">Member since { data.ProfileUser.MemberSince }</p>
 							if data.Rank > 0 {
 								<p class="text-gray-600 text-sm">

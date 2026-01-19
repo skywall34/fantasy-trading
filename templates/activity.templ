@@ -111,16 +111,32 @@ templ ActivityContent(data ActivityFeedData) {
 				@ActivityCard(activity)
 			}
 
-			if data.HasMore {
-				<div class="text-center pt-4">
-					<button
-						hx-get={ fmt.Sprintf("/activity/more?filter=%s&page=%d", data.Filter, data.Page+1) }
-						hx-target="#activity-content"
-						hx-swap="beforeend"
-						class="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-eog-red hover:text-white transition-colors"
-					>
-						Load More
-					</button>
+			<!-- Pagination Controls -->
+			if data.Page > 1 || data.HasMore {
+				<div class="flex justify-center items-center space-x-4 pt-6">
+					if data.Page > 1 {
+						<button
+							hx-get={ fmt.Sprintf("/activity?filter=%s&page=%d", data.Filter, data.Page-1) }
+							hx-target="#activity-content"
+							hx-swap="innerHTML"
+							class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-eog-red hover:text-white transition-colors"
+						>
+							← Previous
+						</button>
+					}
+
+					<span class="text-gray-600 text-sm">Page { fmt.Sprintf("%d", data.Page) }</span>
+
+					if data.HasMore {
+						<button
+							hx-get={ fmt.Sprintf("/activity?filter=%s&page=%d", data.Filter, data.Page+1) }
+							hx-target="#activity-content"
+							hx-swap="innerHTML"
+							class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-eog-red hover:text-white transition-colors"
+						>
+							Next →
+						</button>
+					}
 				</div>
 			}
 		}

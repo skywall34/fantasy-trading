@@ -4,13 +4,11 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strconv"
 
 	"github.com/joho/godotenv"
 	"github.com/skywall34/fantasy-trading/internal/database"
 	"github.com/skywall34/fantasy-trading/internal/handlers"
 	"github.com/skywall34/fantasy-trading/internal/middleware"
-	"github.com/skywall34/fantasy-trading/internal/sync"
 )
 
 func main() {
@@ -35,12 +33,6 @@ func main() {
 
 	log.Println("Database initialized successfully")
 
-	// Start background sync scheduler
-	syncInterval := getEnvInt("SYNC_INTERVAL_MINUTES", 5) // Default 5 minutes
-	scheduler := sync.NewScheduler(db, syncInterval)
-	go scheduler.Start()
-	log.Printf("Background sync started (interval: %d minutes)", syncInterval)
-
 	// Create handlers
 	loginHandler := handlers.NewAPIKeyLoginHandler(db)
 	dashboardHandler := handlers.NewDashboardHandler(db)
@@ -52,6 +44,9 @@ func main() {
 	activityHandler := handlers.NewActivityHandler(db)
 	commentsHandler := handlers.NewCommentsHandler(db)
 	commentActionsHandler := handlers.NewCommentActionsHandler(db)
+	reactionsHandler := handlers.NewReactionsHandler(db)
+	followHandler := handlers.NewFollowHandler(db)
+	searchHandler := handlers.NewSearchHandler(db)
 	userHandler := handlers.NewUserHandler(db)
 	logoutHandler := handlers.NewLogoutHandler(db)
 
@@ -70,12 +65,15 @@ func main() {
 	mux.Handle("/dashboard/content", middleware.AuthMiddleware(db)(dashboardContentHandler))
 	mux.Handle("/leaderboard", middleware.AuthMiddleware(db)(leaderboardHandler))
 	mux.Handle("/activity", middleware.AuthMiddleware(db)(activityHandler))
+	mux.Handle("/search", middleware.AuthMiddleware(db)(searchHandler))
 	mux.Handle("/user/", middleware.AuthMiddleware(db)(userHandler))
 	mux.Handle("/settings", middleware.AuthMiddleware(db)(settingsHandler))
 	mux.Handle("/api/portfolio/history", middleware.AuthMiddleware(db)(portfolioHistoryHandler))
 	mux.Handle("/api/profile/update", middleware.AuthMiddleware(db)(updateProfileHandler))
 	mux.Handle("/api/activities/", middleware.AuthMiddleware(db)(http.StripPrefix("/api/activities/", commentsHandler)))
 	mux.Handle("/api/comments/", middleware.AuthMiddleware(db)(http.StripPrefix("/api/comments/", commentActionsHandler)))
+	mux.Handle("/api/reactions/", middleware.AuthMiddleware(db)(http.StripPrefix("/api/reactions/", reactionsHandler)))
+	mux.Handle("/api/follow", middleware.AuthMiddleware(db)(followHandler))
 	mux.Handle("/", http.RedirectHandler("/dashboard", http.StatusTemporaryRedirect))
 
 	// Wrap with middleware
@@ -99,16 +97,4 @@ func getEnv(key, defaultValue string) string {
 		return defaultValue
 	}
 	return value
-}
-
-func getEnvInt(key string, defaultValue int) int {
-	value := os.Getenv(key)
-	if value == "" {
-		return defaultValue
-	}
-	intValue, err := strconv.Atoi(value)
-	if err != nil {
-		return defaultValue
-	}
-	return intValue
 }

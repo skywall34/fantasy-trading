@@ -157,3 +157,55 @@ func (db *DB) UpdateUserNickname(userID int, nickname sql.NullString) error {
 	_, err := db.Exec(query, nickname, userID)
 	return err
 }
+
+// SearchUsers searches for users by nickname, display name, or email
+func (db *DB) SearchUsers(searchTerm string, limit int) ([]User, error) {
+	query := `
+		SELECT id, alpaca_account_id, email, display_name, nickname, avatar_url, is_public, show_amounts, created_at, last_sync_at
+		FROM users
+		WHERE is_public = 1
+		AND (
+			nickname LIKE '%' || ? || '%'
+			OR display_name LIKE '%' || ? || '%'
+			OR email LIKE '%' || ? || '%'
+		)
+		ORDER BY
+			CASE
+				WHEN nickname LIKE ? || '%' THEN 1
+				WHEN display_name LIKE ? || '%' THEN 2
+				WHEN email LIKE ? || '%' THEN 3
+				ELSE 4
+			END,
+			created_at DESC
+		LIMIT ?
+	`
+
+	rows, err := db.Query(query, searchTerm, searchTerm, searchTerm, searchTerm, searchTerm, searchTerm, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var users []User
+	for rows.Next() {
+		var user User
+		err := rows.Scan(
+			&user.ID,
+			&user.AlpacaAccountID,
+			&user.Email,
+			&user.DisplayName,
+			&user.Nickname,
+			&user.AvatarURL,
+			&user.IsPublic,
+			&user.ShowAmounts,
+			&user.CreatedAt,
+			&user.LastSyncAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+		users = append(users, user)
+	}
+
+	return users, nil
+}
