@@ -164,3 +164,34 @@ func (db *DB) DeleteOldSessionsForUser(userID int) error {
 	_, err := db.Exec(query, userID, userID)
 	return err
 }
+
+// GetLatestSession retrieves the most recent session for a user
+func (db *DB) GetLatestSession(userID int) (*Session, error) {
+	query := `
+		SELECT id, user_id, api_key, api_secret, expires_at, created_at
+		FROM sessions
+		WHERE user_id = ?
+		ORDER BY created_at DESC
+		LIMIT 1
+	`
+
+	var session Session
+	var encryptedKey, encryptedSecret string
+	err := db.QueryRow(query, userID).Scan(
+		&session.ID,
+		&session.UserID,
+		&encryptedKey,
+		&encryptedSecret,
+		&session.ExpiresAt,
+		&session.CreatedAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	// Keep encrypted keys in the session struct
+	session.APIKey = encryptedKey
+	session.APISecret = encryptedSecret
+
+	return &session, nil
+}

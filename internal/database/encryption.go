@@ -145,3 +145,18 @@ func Decrypt(ciphertext string) (string, error) {
 
 	return string(plaintext), nil
 }
+
+// DecryptAPIKeys is a helper function to decrypt API key and secret
+func DecryptAPIKeys(encryptedKey, encryptedSecret string) (string, string, error) {
+	apiKey, err := Decrypt(encryptedKey)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to decrypt API key: %w", err)
+	}
+
+	apiSecret, err := Decrypt(encryptedSecret)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to decrypt API secret: %w", err)
+	}
+
+	return apiKey, apiSecret, nil
+}

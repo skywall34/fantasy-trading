@@ -196,3 +196,34 @@ document.addEventListener('htmx:afterSwap', function(event) {
         setupTimeframeButtons();
     }
 });
+
+// Activity Feed Functions
+function toggleComments(activityId) {
+    const commentsDiv = document.getElementById(`comments-${activityId}`);
+    if (commentsDiv) {
+        commentsDiv.classList.toggle('hidden');
+    }
+}
+
+// Event delegation for comment toggles
+document.addEventListener('click', function(event) {
+    if (event.target.closest('.comments-toggle')) {
+        const button = event.target.closest('.comments-toggle');
+        const activityId = button.getAttribute('data-activity-id');
+        if (activityId) {
+            toggleComments(activityId);
+        }
+    }
+
+    // Reply toggle
+    if (event.target.closest('.reply-toggle')) {
+        const button = event.target.closest('.reply-toggle');
+        const commentId = button.getAttribute('data-comment-id');
+        if (commentId) {
+            const replyForm = document.getElementById(`reply-form-${commentId}`);
+            if (replyForm) {
+                replyForm.classList.toggle('hidden');
+            }
+        }
+    }
+});

@@ -1,0 +1,192 @@
+package templates
+
+import (
+	"fmt"
+)
+
+type UserProfileData struct {
+	ProfileUser      UserProfile
+	IsOwnProfile     bool
+	CurrentUserID    int
+	Rank             int
+	TotalUsers       int
+	Positions        []PositionData
+	RecentActivities []ActivityData
+	PerformanceData  PerformanceData
+}
+
+type UserProfile struct {
+	ID          int
+	DisplayName string
+	Nickname    string
+	AvatarURL   string
+	IsPublic    bool
+	ShowAmounts bool
+	MemberSince string
+}
+
+type PerformanceData struct {
+	CurrentEquity float64
+	GainAmount    float64
+	GainPercent   float64
+}
+
+templ UserProfilePage(user *User, data UserProfileData) {
+	@Layout(data.ProfileUser.DisplayName, user) {
+		<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+			<div class="bg-white rounded-xl shadow-sm p-8 mb-8">
+				<div class="flex items-start justify-between">
+					<div class="flex items-center space-x-6">
+						<div class="flex-shrink-0">
+							if data.ProfileUser.AvatarURL != "" {
+								<img src={ data.ProfileUser.AvatarURL } alt="Avatar" class="w-24 h-24 rounded-full border-4 border-eog-red"/>
+							} else {
+								<div class="w-24 h-24 rounded-full bg-gray-300 flex items-center justify-center border-4 border-eog-red">
+									<span class="text-gray-600 text-3xl font-bold">
+										if data.ProfileUser.Nickname != "" && len(data.ProfileUser.Nickname) > 0 {
+											{ string(data.ProfileUser.Nickname[0]) }
+										} else if data.ProfileUser.DisplayName != "" && len(data.ProfileUser.DisplayName) > 0 {
+											{ string(data.ProfileUser.DisplayName[0]) }
+										} else {
+											U
+										}
+									</span>
+								</div>
+							}
+						</div>
+
+						<div>
+							<h1 class="text-3xl font-bold text-eog-black mb-2">
+								if data.ProfileUser.Nickname != "" {
+									{ data.ProfileUser.Nickname }
+								} else {
+									{ data.ProfileUser.DisplayName }
+								}
+							</h1>
+							<p class="text-gray-600 text-sm mb-1">Member since { data.ProfileUser.MemberSince }</p>
+							if data.Rank > 0 {
+								<p class="text-gray-600 text-sm">
+									Rank: <span class="font-bold text-eog-red">#{fmt.Sprintf("%d", data.Rank)}</span> of {fmt.Sprintf("%d", data.TotalUsers)}
+								</p>
+							}
+						</div>
+					</div>
+
+					if data.ProfileUser.ShowAmounts || data.IsOwnProfile {
+						<div class="text-right">
+							<p class="text-sm text-gray-500 mb-1">Portfolio Value</p>
+							<p class="text-3xl font-bold text-gray-900">${fmt.Sprintf("%.2f", data.PerformanceData.CurrentEquity)}</p>
+							<p class={ "text-lg font-semibold", templ.KV("text-green-600", data.PerformanceData.GainPercent >= 0), templ.KV("text-red-600", data.PerformanceData.GainPercent < 0) }>
+								if data.PerformanceData.GainPercent >= 0 {
+									+{fmt.Sprintf("%.2f", data.PerformanceData.GainPercent)}% ({fmt.Sprintf("$%.2f", data.PerformanceData.GainAmount)})
+								} else {
+									{fmt.Sprintf("%.2f", data.PerformanceData.GainPercent)}% ({fmt.Sprintf("$%.2f", data.PerformanceData.GainAmount)})
+								}
+							</p>
+						</div>
+					} else {
+						<div class="text-right">
+							<p class="text-sm text-gray-500 mb-1">Performance</p>
+							<p class={ "text-2xl font-bold", templ.KV("text-green-600", data.PerformanceData.GainPercent >= 0), templ.KV("text-red-600", data.PerformanceData.GainPercent < 0) }>
+								if data.PerformanceData.GainPercent >= 0 {
+									+{fmt.Sprintf("%.2f", data.PerformanceData.GainPercent)}%
+								} else {
+									{fmt.Sprintf("%.2f", data.PerformanceData.GainPercent)}%
+								}
+							</p>
+							<p class="text-xs text-gray-400">Amount hidden by user</p>
+						</div>
+					}
+				</div>
+			</div>
+
+			<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+				<div class="bg-white rounded-xl shadow-sm p-6">
+					<h2 class="text-xl font-bold text-eog-black mb-4">
+						Positions ({fmt.Sprintf("%d", len(data.Positions))})
+					</h2>
+					if len(data.Positions) == 0 {
+						<p class="text-gray-400 text-center py-8">No positions to display</p>
+					} else {
+						<div class="space-y-3">
+							for _, position := range data.Positions {
+								@UserPositionRow(position, data.ProfileUser.ShowAmounts || data.IsOwnProfile)
+							}
+						</div>
+					}
+				</div>
+
+				<div class="bg-white rounded-xl shadow-sm p-6">
+					<h2 class="text-xl font-bold text-eog-black mb-4">Recent Activity</h2>
+					if len(data.RecentActivities) == 0 {
+						<p class="text-gray-400 text-center py-8">No recent activity</p>
+					} else {
+						<div class="space-y-3">
+							for _, activity := range data.RecentActivities {
+								@ActivityRow(activity, data.ProfileUser.ShowAmounts || data.IsOwnProfile)
+							}
+						</div>
+					}
+				</div>
+			</div>
+		</div>
+	}
+}
+
+templ UserPositionRow(position PositionData, showAmounts bool) {
+	<div class="flex items-center justify-between py-3 border-b border-gray-100 last:border-b-0">
+		<div class="flex-1">
+			<div class="flex items-center space-x-2">
+				<span class="font-bold text-gray-900">{ position.Symbol }</span>
+				if position.AssetClass == "crypto" {
+					<span class="px-2 py-0.5 bg-purple-100 text-purple-700 text-xs rounded-full">CRYPTO</span>
+				} else if position.AssetClass == "us_option" {
+					<span class="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full">OPTION</span>
+				}
+			</div>
+			if showAmounts {
+				<p class="text-sm text-gray-500">{ fmt.Sprintf("%.2f", position.Qty) } shares @ ${ fmt.Sprintf("%.2f", position.Price) }</p>
+			} else {
+				<p class="text-sm text-gray-500">{ fmt.Sprintf("%.2f", position.Qty) } shares</p>
+			}
+		</div>
+		<div class="text-right">
+			if showAmounts {
+				<p class="font-semibold text-gray-900">${ fmt.Sprintf("%.2f", position.MarketValue) }</p>
+			}
+			<p class={ "text-sm font-medium", templ.KV("text-green-600", position.UnrealizedPct >= 0), templ.KV("text-red-600", position.UnrealizedPct < 0) }>
+				if position.UnrealizedPct >= 0 {
+					+{ fmt.Sprintf("%.2f", position.UnrealizedPct) }%
+				} else {
+					{ fmt.Sprintf("%.2f", position.UnrealizedPct) }%
+				}
+			</p>
+		</div>
+	</div>
+}
+
+templ ActivityRow(activity ActivityData, showAmounts bool) {
+	<div class="flex items-center justify-between py-3 border-b border-gray-100 last:border-b-0">
+		<div class="flex-1">
+			<div class="flex items-center space-x-2">
+				if activity.Action == "bought" {
+					<span class="w-2 h-2 bg-green-500 rounded-full"></span>
+				} else if activity.Action == "sold" {
+					<span class="w-2 h-2 bg-red-500 rounded-full"></span>
+				} else {
+					<span class="w-2 h-2 bg-gray-400 rounded-full"></span>
+				}
+				<span class="text-sm text-gray-600">{ activity.Action }</span>
+				<span class="font-semibold text-gray-900">{ activity.Symbol }</span>
+			</div>
+			if showAmounts {
+				<p class="text-xs text-gray-500">{ fmt.Sprintf("%.2f", activity.Qty) } shares @ ${ fmt.Sprintf("%.2f", activity.Price) }</p>
+			} else {
+				<p class="text-xs text-gray-500">{ fmt.Sprintf("%.2f", activity.Qty) } shares</p>
+			}
+		</div>
+		<div class="text-right">
+			<p class="text-xs text-gray-400">{ activity.TimeAgo }</p>
+		</div>
+	</div>
+}
