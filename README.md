@@ -192,11 +192,6 @@ The application uses Alpaca's Trading API v2 with API key authentication:
 5. **User Profiles** - Customizable profiles with privacy controls
 6. **Background Sync** - Automated data synchronization from Alpaca API
 
-### TODO:
-
-The logout doesn't work, and links to leaderboard and activity show "unauthorized". Create a plan to address this
-  after finding the reason. Also, there's no recent activity listed for me
-
 ### Future Enhancements
 - **Following System** - Follow other traders and filter activity feed
 - **Pagination** - Implement offset-based pagination for activity feed
