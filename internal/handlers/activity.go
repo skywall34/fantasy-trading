@@ -91,11 +91,11 @@ func (h *ActivityHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		userName := "Unknown"
 		nickname := ""
+		if actUser.DisplayName.Valid && actUser.DisplayName.String != "" {
+			userName = actUser.DisplayName.String
+		}
 		if actUser.Nickname.Valid && actUser.Nickname.String != "" {
 			nickname = actUser.Nickname.String
-			userName = nickname
-		} else if actUser.DisplayName.Valid {
-			userName = actUser.DisplayName.String
 		}
 
 		action := "traded"
@@ -163,13 +163,7 @@ func (h *ActivityHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	displayName := user.DisplayName.String
-	if displayName == "" && user.Nickname.String != "" {
-		displayName = user.Nickname.String
-	}
-	if displayName == "" && user.Email.String != "" {
-		displayName = user.Email.String
-	}
+	displayName := getDisplayName(user)
 
 	initials := "U"
 	if len(displayName) > 0 {

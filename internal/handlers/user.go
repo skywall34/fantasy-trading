@@ -127,14 +127,8 @@ func (h *UserHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Build profile data
-	displayName := profileUser.DisplayName.String
+	displayName := getDisplayName(profileUser)
 	nickname := profileUser.Nickname.String
-	if displayName == "" && nickname != "" {
-		displayName = nickname
-	}
-	if displayName == "" && profileUser.Email.String != "" {
-		displayName = profileUser.Email.String
-	}
 
 	avatarURL := ""
 	if profileUser.AvatarURL.Valid {
@@ -165,13 +159,7 @@ func (h *UserHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Prepare template user
-	currentDisplayName := currentUser.DisplayName.String
-	if currentDisplayName == "" && currentUser.Nickname.String != "" {
-		currentDisplayName = currentUser.Nickname.String
-	}
-	if currentDisplayName == "" && currentUser.Email.String != "" {
-		currentDisplayName = currentUser.Email.String
-	}
+	currentDisplayName := getDisplayName(currentUser)
 
 	initials := "U"
 	if len(currentDisplayName) > 0 {

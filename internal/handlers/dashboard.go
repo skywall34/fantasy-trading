@@ -110,24 +110,3 @@ func (h *DashboardHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Render template
 	templates.Dashboard(templateUser, data).Render(r.Context(), w)
 }
-
-func getDisplayName(user *database.User) string {
-	if user.Nickname.Valid {
-		return user.Nickname.String
-	}
-	if user.DisplayName.Valid {
-		return user.DisplayName.String
-	}
-	if user.Email.Valid {
-		return user.Email.String
-	}
-	return "User"
-}
-
-func getInitials(user *database.User) string {
-	name := getDisplayName(user)
-	if len(name) >= 2 {
-		return name[:2]
-	}
-	return "U"
-}
