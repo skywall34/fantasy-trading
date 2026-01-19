@@ -16,7 +16,7 @@ func main() {
 	_ = godotenv.Load() // Ignore error if .env doesn't exist
 
 	// Get environment variables
-	port := getEnv("PORT", "8080")
+	port := getEnv("PORT", "8082")
 	dbPath := getEnv("DATABASE_PATH", "./data/database.db")
 
 	// Initialize encryption
