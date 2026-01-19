@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/skywall34/fantasy-trading/internal/alpaca"
 	"github.com/skywall34/fantasy-trading/internal/database"
@@ -94,36 +95,66 @@ func (h *UserHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Get recent activities
-	activities, err := h.db.GetUserRecentActivities(profileUserID, 10)
-	if err != nil {
-		log.Printf("Error getting user activities: %v", err)
-	}
-
+	// Get recent activities from Alpaca
 	recentActivities := make([]templates.ActivityData, 0)
-	for _, act := range activities {
-		if !act.Symbol.Valid || !act.Qty.Valid {
-			continue
-		}
-		activityData, err := convertActivityToTemplateData(h.db, act)
-		if err != nil {
-			continue
-		}
-		recentActivities = append(recentActivities, activityData)
-	}
+	if session != nil {
+		apiKey, apiSecret, err := database.DecryptAPIKeys(session.APIKey, session.APISecret)
+		if err == nil {
+			client := alpaca.NewClient(apiKey, apiSecret)
+			alpacaActivities, err := client.GetActivities(r.Context())
+			if err == nil {
+				// Convert up to 10 most recent activities
+				for i, act := range alpacaActivities {
+					if i >= 10 {
+						break
+					}
 
-	// Get user rank
-	var rank int
-	var totalUsers int
-	leaderboard, err := h.db.GetLeaderboardAllTime()
-	if err == nil {
-		totalUsers = len(leaderboard)
-		for i, entry := range leaderboard {
-			if entry.UserID == profileUserID {
-				rank = i + 1
-				break
+					qty, _ := strconv.ParseFloat(act.Qty, 64)
+					price, _ := strconv.ParseFloat(act.Price, 64)
+
+					action := "traded"
+					if act.Side == "buy" {
+						action = "bought"
+					} else if act.Side == "sell" {
+						action = "sold"
+					}
+
+					timeAgo := "recently"
+					if act.TransactionTime != "" {
+						transTime, err := time.Parse(time.RFC3339, act.TransactionTime)
+						if err == nil {
+							timeAgo = formatTimeAgo(transTime)
+						}
+					}
+
+					displayName := getDisplayName(profileUser)
+
+					recentActivities = append(recentActivities, templates.ActivityData{
+						UserName: displayName,
+						Action:   action,
+						Symbol:   act.Symbol,
+						Qty:      qty,
+						Price:    price,
+						TimeAgo:  timeAgo,
+					})
+				}
 			}
 		}
+	}
+
+	// Get user rank - for now set to 0 as it requires fetching all users
+	// Users can see their rank on the leaderboard page
+	var rank int = 0
+	var totalUsers int = 0
+
+	// Get follower/following counts
+	followerCount, _ := h.db.GetFollowerCount(profileUserID)
+	followingCount, _ := h.db.GetFollowingCount(profileUserID)
+
+	// Check if current user is following the profile user
+	isFollowing := false
+	if !isOwnProfile {
+		isFollowing, _ = h.db.IsFollowing(currentUserID, profileUserID)
 	}
 
 	// Build profile data
@@ -156,6 +187,9 @@ func (h *UserHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Positions:        positions,
 		RecentActivities: recentActivities,
 		PerformanceData:  performanceData,
+		FollowerCount:    followerCount,
+		FollowingCount:   followingCount,
+		IsFollowing:      isFollowing,
 	}
 
 	// Prepare template user

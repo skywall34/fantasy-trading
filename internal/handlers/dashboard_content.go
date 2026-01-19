@@ -4,6 +4,8 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"strconv"
+	"time"
 
 	"github.com/skywall34/fantasy-trading/internal/alpaca"
 	"github.com/skywall34/fantasy-trading/internal/database"
@@ -72,8 +74,57 @@ func (h *DashboardContentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	// Convert positions to template data
 	positionData := convertPositionsToTemplateData(positions)
 
-	// Get recent activity from database for this user
-	recentActivity := getRecentActivityData(h.db, userID, 10)
+	// Get recent activities from Alpaca
+	alpacaActivities, err := alpacaClient.GetActivities(ctx)
+	if err != nil {
+		log.Printf("Failed to get activities: %v", err)
+		alpacaActivities = []alpaca.Activity{}
+	}
+
+	// Get user for display name
+	user, err := h.db.GetUserByID(userID)
+	if err != nil {
+		log.Printf("Failed to get user: %v", err)
+	}
+
+	// Convert activities to template data
+	recentActivity := make([]templates.ActivityData, 0)
+	for i, act := range alpacaActivities {
+		if i >= 10 {
+			break
+		}
+		qty, _ := strconv.ParseFloat(act.Qty, 64)
+		price, _ := strconv.ParseFloat(act.Price, 64)
+
+		action := "traded"
+		if act.Side == "buy" {
+			action = "bought"
+		} else if act.Side == "sell" {
+			action = "sold"
+		}
+
+		timeAgo := "recently"
+		if act.TransactionTime != "" {
+			transTime, err := time.Parse(time.RFC3339, act.TransactionTime)
+			if err == nil {
+				timeAgo = formatTimeAgo(transTime)
+			}
+		}
+
+		displayName := "User"
+		if user != nil {
+			displayName = getDisplayName(user)
+		}
+
+		recentActivity = append(recentActivity, templates.ActivityData{
+			UserName: displayName,
+			Action:   action,
+			Symbol:   act.Symbol,
+			Qty:      qty,
+			Price:    price,
+			TimeAgo:  timeAgo,
+		})
+	}
 
 	// Create dashboard data
 	data := templates.DashboardData{
