@@ -70,7 +70,7 @@ func (h *APIKeyLoginHandler) handleLogin(w http.ResponseWriter, r *http.Request)
 	}
 
 	// Create or get user
-	user, err := h.db.CreateUser(account.ID, "", displayName)
+	user, err := h.db.CreateUser(account.ID, nil, displayName)
 	if err != nil {
 		log.Printf("Failed to create user: %v", err)
 		http.Error(w, "Failed to create user", http.StatusInternalServerError)

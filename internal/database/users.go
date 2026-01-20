@@ -19,12 +19,12 @@ type User struct {
 }
 
 // CreateUser creates a new user or returns existing user
-func (db *DB) CreateUser(alpacaAccountID, email, displayName string) (*User, error) {
+func (db *DB) CreateUser(alpacaAccountID string, email *string, displayName string) (*User, error) {
 	query := `
 		INSERT INTO users (alpaca_account_id, email, display_name)
 		VALUES (?, ?, ?)
 		ON CONFLICT(alpaca_account_id) DO UPDATE SET
-			email = excluded.email,
+			email = COALESCE(excluded.email, email),
 			display_name = COALESCE(excluded.display_name, display_name)
 		RETURNING id, alpaca_account_id, email, display_name, nickname, avatar_url, is_public, show_amounts, created_at, last_sync_at
 	`
