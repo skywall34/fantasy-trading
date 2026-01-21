@@ -203,8 +203,8 @@ func (h *ActivityHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.Header.Get("HX-Request") == "true" {
-		if err := templates.ActivityContent(data).Render(r.Context(), w); err != nil {
-			log.Printf("Error rendering activity content: %v", err)
+		if err := templates.ActivitySection(data).Render(r.Context(), w); err != nil {
+			log.Printf("Error rendering activity section: %v", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}

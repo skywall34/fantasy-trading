@@ -24,48 +24,54 @@ type LeaderboardEntryData struct {
 templ Leaderboard(user *User, data LeaderboardData) {
 	@Layout("Leaderboard", user) {
 		<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-			<div class="mb-8">
-				<h1 class="text-3xl font-bold text-eog-black mb-4">Leaderboard</h1>
-				<div class="flex space-x-2">
-					<button
-						hx-get="/leaderboard?period=daily"
-						hx-target="#leaderboard-content"
-						hx-swap="innerHTML"
-						class={ "px-4 py-2 rounded-lg transition-colors", templ.KV("bg-eog-red text-white", data.Period == "daily"), templ.KV("bg-gray-100 text-gray-600 hover:bg-eog-red hover:text-white", data.Period != "daily") }
-					>
-						Daily
-					</button>
-					<button
-						hx-get="/leaderboard?period=weekly"
-						hx-target="#leaderboard-content"
-						hx-swap="innerHTML"
-						class={ "px-4 py-2 rounded-lg transition-colors", templ.KV("bg-eog-red text-white", data.Period == "weekly"), templ.KV("bg-gray-100 text-gray-600 hover:bg-eog-red hover:text-white", data.Period != "weekly") }
-					>
-						Weekly
-					</button>
-					<button
-						hx-get="/leaderboard?period=monthly"
-						hx-target="#leaderboard-content"
-						hx-swap="innerHTML"
-						class={ "px-4 py-2 rounded-lg transition-colors", templ.KV("bg-eog-red text-white", data.Period == "monthly"), templ.KV("bg-gray-100 text-gray-600 hover:bg-eog-red hover:text-white", data.Period != "monthly") }
-					>
-						Monthly
-					</button>
-					<button
-						hx-get="/leaderboard?period=all"
-						hx-target="#leaderboard-content"
-						hx-swap="innerHTML"
-						class={ "px-4 py-2 rounded-lg transition-colors", templ.KV("bg-eog-red text-white", data.Period == "all"), templ.KV("bg-gray-100 text-gray-600 hover:bg-eog-red hover:text-white", data.Period != "all") }
-					>
-						All Time
-					</button>
-				</div>
-			</div>
-			<div id="leaderboard-content">
-				@LeaderboardContent(data)
-			</div>
+			<h1 class="text-3xl font-bold text-eog-black mb-4">Leaderboard</h1>
+			@LeaderboardSection(data)
 		</div>
 	}
+}
+
+templ LeaderboardSection(data LeaderboardData) {
+	<div id="leaderboard-section">
+		<div class="mb-8">
+			<div class="flex space-x-2">
+				<button
+					hx-get="/leaderboard?period=daily"
+					hx-target="#leaderboard-section"
+					hx-swap="outerHTML"
+					class={ "px-4 py-2 rounded-lg transition-colors", templ.KV("bg-eog-red text-white", data.Period == "daily"), templ.KV("bg-gray-100 text-gray-600 hover:bg-eog-red hover:text-white", data.Period != "daily") }
+				>
+					Daily
+				</button>
+				<button
+					hx-get="/leaderboard?period=weekly"
+					hx-target="#leaderboard-section"
+					hx-swap="outerHTML"
+					class={ "px-4 py-2 rounded-lg transition-colors", templ.KV("bg-eog-red text-white", data.Period == "weekly"), templ.KV("bg-gray-100 text-gray-600 hover:bg-eog-red hover:text-white", data.Period != "weekly") }
+				>
+					Weekly
+				</button>
+				<button
+					hx-get="/leaderboard?period=monthly"
+					hx-target="#leaderboard-section"
+					hx-swap="outerHTML"
+					class={ "px-4 py-2 rounded-lg transition-colors", templ.KV("bg-eog-red text-white", data.Period == "monthly"), templ.KV("bg-gray-100 text-gray-600 hover:bg-eog-red hover:text-white", data.Period != "monthly") }
+				>
+					Monthly
+				</button>
+				<button
+					hx-get="/leaderboard?period=all"
+					hx-target="#leaderboard-section"
+					hx-swap="outerHTML"
+					class={ "px-4 py-2 rounded-lg transition-colors", templ.KV("bg-eog-red text-white", data.Period == "all"), templ.KV("bg-gray-100 text-gray-600 hover:bg-eog-red hover:text-white", data.Period != "all") }
+				>
+					All Time
+				</button>
+			</div>
+		</div>
+		<div id="leaderboard-content">
+			@LeaderboardContent(data)
+		</div>
+	</div>
 }
 
 templ LeaderboardContent(data LeaderboardData) {

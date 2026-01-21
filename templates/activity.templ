@@ -69,34 +69,39 @@ type ActivityFeedItem struct {
 templ Activity(user *User, data ActivityFeedData) {
 	@Layout("Activity Feed", user) {
 		<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-			<div class="mb-8">
-				<h1 class="text-3xl font-bold text-eog-black mb-4">Activity Feed</h1>
-
-				<div class="flex space-x-2">
-					<button
-						hx-get="/activity?filter=all"
-						hx-target="#activity-content"
-						hx-swap="innerHTML"
-						class={ "px-4 py-2 rounded-lg transition-colors", templ.KV("bg-eog-red text-white", data.Filter == "all"), templ.KV("bg-gray-100 text-gray-600 hover:bg-eog-red hover:text-white", data.Filter != "all") }
-					>
-						All Users
-					</button>
-					<button
-						hx-get="/activity?filter=following"
-						hx-target="#activity-content"
-						hx-swap="innerHTML"
-						class={ "px-4 py-2 rounded-lg transition-colors", templ.KV("bg-eog-red text-white", data.Filter == "following"), templ.KV("bg-gray-100 text-gray-600 hover:bg-eog-red hover:text-white", data.Filter != "following") }
-					>
-						Following
-					</button>
-				</div>
-			</div>
-
-			<div id="activity-content">
-				@ActivityContent(data)
-			</div>
+			<h1 class="text-3xl font-bold text-eog-black mb-4">Activity Feed</h1>
+			@ActivitySection(data)
 		</div>
 	}
+}
+
+templ ActivitySection(data ActivityFeedData) {
+	<div id="activity-section">
+		<div class="mb-8">
+			<div class="flex space-x-2">
+				<button
+					hx-get="/activity?filter=all"
+					hx-target="#activity-section"
+					hx-swap="outerHTML"
+					class={ "px-4 py-2 rounded-lg transition-colors", templ.KV("bg-eog-red text-white", data.Filter == "all"), templ.KV("bg-gray-100 text-gray-600 hover:bg-eog-red hover:text-white", data.Filter != "all") }
+				>
+					All Users
+				</button>
+				<button
+					hx-get="/activity?filter=following"
+					hx-target="#activity-section"
+					hx-swap="outerHTML"
+					class={ "px-4 py-2 rounded-lg transition-colors", templ.KV("bg-eog-red text-white", data.Filter == "following"), templ.KV("bg-gray-100 text-gray-600 hover:bg-eog-red hover:text-white", data.Filter != "following") }
+				>
+					Following
+				</button>
+			</div>
+		</div>
+
+		<div id="activity-content">
+			@ActivityContent(data)
+		</div>
+	</div>
 }
 
 templ ActivityContent(data ActivityFeedData) {
@@ -117,8 +122,8 @@ templ ActivityContent(data ActivityFeedData) {
 					if data.Page > 1 {
 						<button
 							hx-get={ fmt.Sprintf("/activity?filter=%s&page=%d", data.Filter, data.Page-1) }
-							hx-target="#activity-content"
-							hx-swap="innerHTML"
+							hx-target="#activity-section"
+							hx-swap="outerHTML"
 							class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-eog-red hover:text-white transition-colors"
 						>
 							← Previous
@@ -130,8 +135,8 @@ templ ActivityContent(data ActivityFeedData) {
 					if data.HasMore {
 						<button
 							hx-get={ fmt.Sprintf("/activity?filter=%s&page=%d", data.Filter, data.Page+1) }
-							hx-target="#activity-content"
-							hx-swap="innerHTML"
+							hx-target="#activity-section"
+							hx-swap="outerHTML"
 							class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-eog-red hover:text-white transition-colors"
 						>
 							Next →

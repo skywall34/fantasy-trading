@@ -192,8 +192,8 @@ func (h *LeaderboardHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.Header.Get("HX-Request") == "true" {
-		if err := templates.LeaderboardContent(data).Render(r.Context(), w); err != nil {
-			log.Printf("Error rendering leaderboard content: %v", err)
+		if err := templates.LeaderboardSection(data).Render(r.Context(), w); err != nil {
+			log.Printf("Error rendering leaderboard section: %v", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
