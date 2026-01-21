@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -8,17 +10,23 @@ import (
 	"time"
 
 	"github.com/skywall34/fantasy-trading/internal/alpaca"
+	"github.com/skywall34/fantasy-trading/internal/cache"
 	"github.com/skywall34/fantasy-trading/internal/database"
 	"github.com/skywall34/fantasy-trading/internal/middleware"
 	"github.com/skywall34/fantasy-trading/templates"
 )
 
 type UserHandler struct {
-	db *database.DB
+	db    *database.DB
+	cache *cache.Cache
 }
 
 func NewUserHandler(db *database.DB) *UserHandler {
-	return &UserHandler{db: db}
+	return &UserHandler{db: db, cache: nil}
+}
+
+func (h *UserHandler) SetCache(c *cache.Cache) {
+	h.cache = c
 }
 
 func (h *UserHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -70,26 +78,61 @@ func (h *UserHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var performanceData templates.PerformanceData
 
 	if session != nil {
-		// Get decrypted API keys
-		apiKey, apiSecret, err := database.DecryptAPIKeys(session.APIKey, session.APISecret)
-		if err == nil {
-			// Fetch live data from Alpaca
-			client := alpaca.NewClient(apiKey, apiSecret)
+		// Try to use cache for account data
+		if h.cache != nil {
+			cacheKey := fmt.Sprintf("account:%d", profileUserID)
 
-			// Get account info
-			account, err := client.GetAccount(r.Context())
-			if err == nil {
+			// Define refresh function
+			refreshFunc := func(ctx context.Context) (any, error) {
+				apiKey, apiSecret, err := database.DecryptAPIKeys(session.APIKey, session.APISecret)
+				if err != nil {
+					return nil, err
+				}
+				client := alpaca.NewClient(apiKey, apiSecret)
+				return client.GetAccount(ctx)
+			}
+
+			// Get account data with 60s TTL (on-demand refresh, no background)
+			if data, err := h.cache.GetOrSetWithRefresh(cacheKey, 60*time.Second, refreshFunc); err == nil {
+				account := data.(*alpaca.Account)
 				accountData := parseAccountData(account)
 				performanceData = templates.PerformanceData{
 					CurrentEquity: accountData.Equity,
 					GainAmount:    accountData.TotalGain,
 					GainPercent:   accountData.TotalGainPct,
 				}
+			}
 
-				// Get positions
+			// Get positions (not cached - fetched on demand)
+			apiKey, apiSecret, err := database.DecryptAPIKeys(session.APIKey, session.APISecret)
+			if err == nil {
+				client := alpaca.NewClient(apiKey, apiSecret)
 				alpacaPositions, err := client.GetPositions(r.Context())
 				if err == nil {
 					positions = convertPositionsToTemplateData(alpacaPositions)
+				}
+			}
+		} else {
+			// Fallback to direct API call if cache not available
+			apiKey, apiSecret, err := database.DecryptAPIKeys(session.APIKey, session.APISecret)
+			if err == nil {
+				client := alpaca.NewClient(apiKey, apiSecret)
+
+				// Get account info
+				account, err := client.GetAccount(r.Context())
+				if err == nil {
+					accountData := parseAccountData(account)
+					performanceData = templates.PerformanceData{
+						CurrentEquity: accountData.Equity,
+						GainAmount:    accountData.TotalGain,
+						GainPercent:   accountData.TotalGainPct,
+					}
+
+					// Get positions
+					alpacaPositions, err := client.GetPositions(r.Context())
+					if err == nil {
+						positions = convertPositionsToTemplateData(alpacaPositions)
+					}
 				}
 			}
 		}
@@ -98,47 +141,69 @@ func (h *UserHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Get recent activities from Alpaca
 	recentActivities := make([]templates.ActivityData, 0)
 	if session != nil {
-		apiKey, apiSecret, err := database.DecryptAPIKeys(session.APIKey, session.APISecret)
-		if err == nil {
-			client := alpaca.NewClient(apiKey, apiSecret)
-			alpacaActivities, err := client.GetActivities(r.Context())
+		var alpacaActivities []alpaca.Activity
+
+		// Try to use cache for activities
+		if h.cache != nil {
+			cacheKey := fmt.Sprintf("activities:%d", profileUserID)
+
+			// Define refresh function
+			refreshFunc := func(ctx context.Context) (any, error) {
+				apiKey, apiSecret, err := database.DecryptAPIKeys(session.APIKey, session.APISecret)
+				if err != nil {
+					return nil, err
+				}
+				client := alpaca.NewClient(apiKey, apiSecret)
+				return client.GetActivities(ctx)
+			}
+
+			// Get activities with 30s TTL (on-demand refresh)
+			if data, err := h.cache.GetOrSetWithRefresh(cacheKey, 30*time.Second, refreshFunc); err == nil {
+				alpacaActivities = data.([]alpaca.Activity)
+			}
+		} else {
+			// Fallback to direct API call if cache not available
+			apiKey, apiSecret, err := database.DecryptAPIKeys(session.APIKey, session.APISecret)
 			if err == nil {
-				// Convert up to 10 most recent activities
-				for i, act := range alpacaActivities {
-					if i >= 10 {
-						break
-					}
+				client := alpaca.NewClient(apiKey, apiSecret)
+				alpacaActivities, _ = client.GetActivities(r.Context())
+			}
+		}
 
-					qty, _ := strconv.ParseFloat(act.Qty, 64)
-					price, _ := strconv.ParseFloat(act.Price, 64)
+		// Convert up to 10 most recent activities
+		for i, act := range alpacaActivities {
+			if i >= 10 {
+				break
+			}
 
-					action := "traded"
-					if act.Side == "buy" {
-						action = "bought"
-					} else if act.Side == "sell" {
-						action = "sold"
-					}
+			qty, _ := strconv.ParseFloat(act.Qty, 64)
+			price, _ := strconv.ParseFloat(act.Price, 64)
 
-					timeAgo := "recently"
-					if act.TransactionTime != "" {
-						transTime, err := time.Parse(time.RFC3339, act.TransactionTime)
-						if err == nil {
-							timeAgo = formatTimeAgo(transTime)
-						}
-					}
+			action := "traded"
+			if act.Side == "buy" {
+				action = "bought"
+			} else if act.Side == "sell" {
+				action = "sold"
+			}
 
-					displayName := getDisplayName(profileUser)
-
-					recentActivities = append(recentActivities, templates.ActivityData{
-						UserName: displayName,
-						Action:   action,
-						Symbol:   act.Symbol,
-						Qty:      qty,
-						Price:    price,
-						TimeAgo:  timeAgo,
-					})
+			timeAgo := "recently"
+			if act.TransactionTime != "" {
+				transTime, err := time.Parse(time.RFC3339, act.TransactionTime)
+				if err == nil {
+					timeAgo = formatTimeAgo(transTime)
 				}
 			}
+
+			displayName := getDisplayName(profileUser)
+
+			recentActivities = append(recentActivities, templates.ActivityData{
+				UserName: displayName,
+				Action:   action,
+				Symbol:   act.Symbol,
+				Qty:      qty,
+				Price:    price,
+				TimeAgo:  timeAgo,
+			})
 		}
 	}
 

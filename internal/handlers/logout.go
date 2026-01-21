@@ -1,22 +1,32 @@
 package handlers
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 
+	"github.com/skywall34/fantasy-trading/internal/cache"
 	"github.com/skywall34/fantasy-trading/internal/database"
 	"github.com/skywall34/fantasy-trading/internal/middleware"
 )
 
 type LogoutHandler struct {
-	db *database.DB
+	db    *database.DB
+	cache *cache.Cache
 }
 
 func NewLogoutHandler(db *database.DB) *LogoutHandler {
-	return &LogoutHandler{db: db}
+	return &LogoutHandler{db: db, cache: nil}
+}
+
+func (h *LogoutHandler) SetCache(c *cache.Cache) {
+	h.cache = c
 }
 
 func (h *LogoutHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	// Get user ID from context (if authenticated)
+	userID, hasUserID := middleware.GetUserID(r.Context())
+
 	// Get session ID from context (set by auth middleware if available)
 	sessionID, ok := middleware.GetSessionID(r.Context())
 	if !ok {
@@ -33,6 +43,15 @@ func (h *LogoutHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			log.Printf("Failed to delete session: %v", err)
 			// Continue anyway - we'll still clear the cookie
 		}
+	}
+
+	// Invalidate cache entries for this user
+	if hasUserID && h.cache != nil {
+		accountKey := fmt.Sprintf("account:%d", userID)
+		activitiesKey := fmt.Sprintf("activities:%d", userID)
+		h.cache.Delete(accountKey)
+		h.cache.Delete(activitiesKey)
+		log.Printf("Invalidated cache for user %d on logout", userID)
 	}
 
 	// Clear session cookie

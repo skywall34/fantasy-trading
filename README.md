@@ -203,9 +203,5 @@ The application uses Alpaca's Trading API v2 with API key authentication:
 8. **Pagination** - Offset-based pagination for activity feed with Previous/Next controls
 9. **User Search** - Search and discover traders by name or email
 10. **Position Display Fix** - Positions now show average entry price instead of current market price
-
-### Future Enhancements
-- **Trade Notifications** - Real-time notifications for followed traders
-- **Docker Deployment** - Containerization for production deployment
-- **Advanced Analytics** - More detailed performance metrics and charts
-- **Mobile Responsive Design** - Enhanced mobile user experience
+11. **Docker Deployment** - Containerization for production deployment
+12. **Caching** - Caching layer for frequent user requests

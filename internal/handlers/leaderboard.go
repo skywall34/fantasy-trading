@@ -1,23 +1,32 @@
 package handlers
 
 import (
+	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"sort"
 	"strconv"
+	"time"
 
 	"github.com/skywall34/fantasy-trading/internal/alpaca"
+	"github.com/skywall34/fantasy-trading/internal/cache"
 	"github.com/skywall34/fantasy-trading/internal/database"
 	"github.com/skywall34/fantasy-trading/internal/middleware"
 	"github.com/skywall34/fantasy-trading/templates"
 )
 
 type LeaderboardHandler struct {
-	db *database.DB
+	db    *database.DB
+	cache *cache.Cache
 }
 
 func NewLeaderboardHandler(db *database.DB) *LeaderboardHandler {
-	return &LeaderboardHandler{db: db}
+	return &LeaderboardHandler{db: db, cache: nil}
+}
+
+func (h *LeaderboardHandler) SetCache(c *cache.Cache) {
+	h.cache = c
 }
 
 func (h *LeaderboardHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -61,26 +70,57 @@ func (h *LeaderboardHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	var performances []userPerformance
 	for _, u := range publicUsers {
-		// Get user's session to fetch Alpaca data
-		session, err := h.db.GetLatestSession(u.ID)
-		if err != nil {
-			log.Printf("No session found for user %d: %v", u.ID, err)
-			continue
-		}
+		var account *alpaca.Account
 
-		// Get decrypted API keys
-		apiKey, apiSecret, err := database.DecryptAPIKeys(session.APIKey, session.APISecret)
-		if err != nil {
-			log.Printf("Failed to decrypt API keys for user %d: %v", u.ID, err)
-			continue
-		}
+		// Try to use cache if available
+		if h.cache != nil {
+			cacheKey := fmt.Sprintf("account:%d", u.ID)
 
-		// Fetch live data from Alpaca
-		client := alpaca.NewClient(apiKey, apiSecret)
-		account, err := client.GetAccount(r.Context())
-		if err != nil {
-			log.Printf("Failed to get Alpaca account for user %d: %v", u.ID, err)
-			continue
+			// Define refresh function for this user
+			userID := u.ID // Capture for closure
+			refreshFunc := func(ctx context.Context) (any, error) {
+				session, err := h.db.GetLatestSession(userID)
+				if err != nil {
+					return nil, err
+				}
+
+				apiKey, apiSecret, err := database.DecryptAPIKeys(session.APIKey, session.APISecret)
+				if err != nil {
+					return nil, err
+				}
+
+				client := alpaca.NewClient(apiKey, apiSecret)
+				return client.GetAccount(ctx)
+			}
+
+			// Get or set with auto-refresh
+			data, err := h.cache.GetOrSetWithRefresh(cacheKey, 60*time.Second, refreshFunc)
+			if err != nil {
+				log.Printf("Failed to get account for user %d: %v", u.ID, err)
+				continue
+			}
+
+			account = data.(*alpaca.Account)
+		} else {
+			// Fallback to direct API call if cache is not available
+			session, err := h.db.GetLatestSession(u.ID)
+			if err != nil {
+				log.Printf("No session found for user %d: %v", u.ID, err)
+				continue
+			}
+
+			apiKey, apiSecret, err := database.DecryptAPIKeys(session.APIKey, session.APISecret)
+			if err != nil {
+				log.Printf("Failed to decrypt API keys for user %d: %v", u.ID, err)
+				continue
+			}
+
+			client := alpaca.NewClient(apiKey, apiSecret)
+			account, err = client.GetAccount(r.Context())
+			if err != nil {
+				log.Printf("Failed to get Alpaca account for user %d: %v", u.ID, err)
+				continue
+			}
 		}
 
 		// Parse account data
